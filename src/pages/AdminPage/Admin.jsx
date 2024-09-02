@@ -38,10 +38,13 @@ const Admin = () => {
           </ul>
         </nav>
         <div className="px-4 py-6 border-t border-gray-700">
-          <button className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md">
+          <Link
+            to="/home"  // Anasayfa yolunu belirtin
+            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md"
+          >
             <FiLogOut />
             Logout
-          </button>
+          </Link>
         </div>
       </aside>
 

@@ -4,7 +4,6 @@ import userImg from "../../assets/images/avatar-icon.png";
 import { NavLink, Link } from "react-router-dom";
 import { BiMenu } from "react-icons/bi";
 
-
 const navLinks = [
   {
     path: "/home",
@@ -53,13 +52,13 @@ const Header = () => {
       <div className="container">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div>
-            <img src={logo} alt="Logo" />
-          </div>
+          <Link to="/home">
+            <img src={logo} alt="Logo" className="cursor-pointer" />
+          </Link>
 
           {/* Navigation */}
-          <div className="navigation" ref={menuRef}>
-            <ul className="menu flex items-center gap-[2.7rem]">
+          <div className="navigation md:block hidden " ref={menuRef}>
+            <ul className="menu flex items-center gap-[2.7rem] ">
               {navLinks.map((link, index) => (
                 <li key={index}>
                   <NavLink
@@ -82,7 +81,11 @@ const Header = () => {
             <div className="hidden">
               <Link to="/">
                 <figure className="w-[35px] h-[35px] rounded-full cursor-auto">
-                  <img src={userImg} className="w-full rounded-full" alt="User" />
+                  <img
+                    src={userImg}
+                    className="w-full rounded-full"
+                    alt="User"
+                  />
                 </figure>
               </Link>
             </div>

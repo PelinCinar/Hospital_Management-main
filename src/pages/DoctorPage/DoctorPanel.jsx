@@ -1,27 +1,47 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { FiCalendar, FiUser, FiLogOut } from 'react-icons/fi';
+import { Link, Outlet } from 'react-router-dom';
 
 const DoctorPanel = () => {
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Doctor Panel</h1>
+    <div className="min-h-screen flex bg-gray-100">
+      <aside className="w-64 bg-gray-800 text-white flex flex-col">
+        <div className="text-center py-6 border-b border-gray-700">
+          <h1 className="text-2xl font-bold">Doctor Panel</h1>
+        </div>
+        <nav className="flex-1 px-4 py-6">
+          <ul className="space-y-4">
+            <li>
+              <Link
+                to="appointments"
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiCalendar /> Appointments
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="profile"
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiUser /> Profile
+              </Link>
+            </li>
+          </ul>
+        </nav>
+        <div className="px-4 py-6 border-t border-gray-700">
+          <Link to="/login">
+            <button className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md">
+              <FiLogOut />
+              Logout
+            </button>
+          </Link>
+        </div>
+      </aside>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Link to="/doctor/appointments" className="bg-white p-4 rounded-lg shadow-md hover:bg-gray-50">
-          <h2 className="text-xl font-semibold mb-2">View Appointments</h2>
-          <p>Manage and view your patient appointments.</p>
-        </Link>
-
-        <Link to="/doctor/reports" className="bg-white p-4 rounded-lg shadow-md hover:bg-gray-50">
-          <h2 className="text-xl font-semibold mb-2">Generate Reports</h2>
-          <p>Create and view various reports related to your patients.</p>
-        </Link>
-
-        <Link to="/doctor/profile" className="bg-white p-4 rounded-lg shadow-md hover:bg-gray-50">
-          <h2 className="text-xl font-semibold mb-2">Profile Settings</h2>
-          <p>Update your profile and settings.</p>
-        </Link>
-      </div>
+      <main className="flex-1 p-6">
+        <Outlet />
+      </main>
     </div>
   );
 };

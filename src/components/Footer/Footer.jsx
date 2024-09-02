@@ -74,7 +74,9 @@ const Footer = () => {
       <div className="container">
         <div className="flex justify-between flex-col md:flex-row md:flex-wrap flex-wrap gap-[30px]">
           <div>
-            <img src={logo} alt="" />
+            <Link to="/home">
+              <img src={logo} alt="Logo" className="cursor-pointer" />
+            </Link>
             <p className="text-[16px] leading-7 font-[400 ] text-textColor mt-4">
               Copyright ©{year} developed by Pelin & Nil
             </p>
@@ -110,7 +112,7 @@ const Footer = () => {
           </div>
           <div>
             <h2 className="text-[20px] leading-[30px] font-[700] mb-6 text-headingColor">
-             I want to:
+              I want to:
             </h2>
             <ul>
               {quickLinks02.map((item, index) => (
