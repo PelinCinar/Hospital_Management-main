@@ -1,8 +1,10 @@
 import { useFormik } from "formik";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 const Login = () => {
+  const navigate = useNavigate(); // useNavigate kancasını tanımlıyoruz.
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -18,7 +20,16 @@ const Login = () => {
     }),
     onSubmit: (values, { resetForm }) => {
       console.log(values);
-      resetForm();
+
+      // Giriş bilgilerinin doğruluğunu kontrol edebilirsin.
+      // Bu aşamada bir API isteği ile kontrol edebilir ya da yerel doğrulama yapabilirsin.
+      const isAuthenticated = true; // Burada geçici olarak true yapıldı, gerçek doğrulama eklenmeli.
+
+      if (isAuthenticated) {
+        navigate("/admin"); // Eğer giriş başarılıysa admin sayfasına yönlendir.
+      }
+
+      resetForm(); // Formu sıfırla
     },
   });
 

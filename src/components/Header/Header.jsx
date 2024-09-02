@@ -2,7 +2,9 @@ import { useEffect, useRef } from "react";
 import logo from "../../assets/images/logo.png";
 import userImg from "../../assets/images/avatar-icon.png";
 import { NavLink, Link } from "react-router-dom";
-import { BiMenu } from "react-icons/bi"
+import { BiMenu } from "react-icons/bi";
+
+
 const navLinks = [
   {
     path: "/home",
@@ -21,38 +23,42 @@ const navLinks = [
     display: "Contact",
   },
 ];
+
 const Header = () => {
+  const headerRef = useRef(null);
+  const menuRef = useRef(null);
 
-  const headerRef = useRef(null)
-  const menuRef = useRef(null)
-
-  const handleStickyHeader = () => {
-    window.addEventListener("scroll", () => {
-      if(document.body.scrollTop > 80 || document.documentElement.scrollTop > 80){
-        headerRef.current.classList.add('sticky_')
-      }else{
-       headerRef.current.classList.remove('sticky_header')
-      }
-    })
-  }
   useEffect(() => {
-    handleStickyHeader()
+    const handleStickyHeader = () => {
+      if (
+        document.body.scrollTop > 80 ||
+        document.documentElement.scrollTop > 80
+      ) {
+        headerRef.current.classList.add("sticky_header");
+      } else {
+        headerRef.current.classList.remove("sticky_header");
+      }
+    };
 
-    return () => window.removeEventListener('scroll',handleStickyHeader)
-  })
+    window.addEventListener("scroll", handleStickyHeader);
 
-  const toggleMenu = () => menuRef.current.classList.toggle('show_menu')
+    // Cleanup the event listener on component unmount
+    return () => window.removeEventListener("scroll", handleStickyHeader);
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  const toggleMenu = () => menuRef.current.classList.toggle("show_menu");
 
   return (
-    <header className="header flex items-center">
+    <header ref={headerRef} className="header flex items-center">
       <div className="container">
         <div className="flex items-center justify-between">
-          {/*   logo     */}
+          {/* Logo */}
           <div>
-            <img src={logo} alt="" />
+            <img src={logo} alt="Logo" />
           </div>
 
-          <div className="navigation" ref={menuRef} onClick={toggleMenu}>
+          {/* Navigation */}
+          <div className="navigation" ref={menuRef}>
             <ul className="menu flex items-center gap-[2.7rem]">
               {navLinks.map((link, index) => (
                 <li key={index}>
@@ -60,7 +66,7 @@ const Header = () => {
                     to={link.path}
                     className={(navClass) =>
                       navClass.isActive
-                        ? "text-primaryColor text-[16px] leading-7 font-[600] "
+                        ? "text-primaryColor text-[16px] leading-7 font-[600]"
                         : "text-textColor text-[16px] leading-7 font-[500] hover:text-primaryColor"
                     }
                   >
@@ -71,24 +77,28 @@ const Header = () => {
             </ul>
           </div>
 
+          {/* User and Menu */}
           <div className="flex items-center gap-4">
             <div className="hidden">
               <Link to="/">
                 <figure className="w-[35px] h-[35px] rounded-full cursor-auto">
-                  <img src={userImg} className="w-full rounded-full" alt="" />
+                  <img src={userImg} className="w-full rounded-full" alt="User" />
                 </figure>
               </Link>
             </div>
 
             <Link to="/login">
-              <button className="bg-primaryColor py-2 px-6 text-white font-[600px] h-[44px] flex items-center
-              justify-center rounded-[50px]">
+              <button
+                className="bg-primaryColor py-2 px-6 text-white font-[600px] h-[44px] flex items-center
+                justify-center rounded-[50px]"
+              >
                 Login
               </button>
             </Link>
 
+            {/* Menu Toggle Button */}
             <span className="md:hidden" onClick={toggleMenu}>
-              <BiMenu className="w-6 h-6 cursor-pointer"  />
+              <BiMenu className="w-6 h-6 cursor-pointer" />
             </span>
           </div>
         </div>

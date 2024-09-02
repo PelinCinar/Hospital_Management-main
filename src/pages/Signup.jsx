@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import * as Yup from "yup";
 import signupImg from "../assets/images/signup.gif";
 import { useState } from "react";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../fireBaseConfig";
 
 const Signup = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -35,10 +37,27 @@ const Signup = () => {
       gender: Yup.string()
         .required("Cinsiyet seçimi zorunludur!"),
     }),
-    onSubmit: (values, { resetForm }) => {
-      console.log(values);
-      // Burada kayıt işlemini gerçekleştirebilirsiniz
-      resetForm();
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        // Add user data to Firestore
+        await addDoc(collection(db, "users"), {
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password, // Consider hashing passwords before storing them
+          role: values.role,
+          gender: values.gender,
+          profileImage: values.profileImage ? values.profileImage.name : null, // You might need to upload this to Firebase Storage separately
+        });
+
+        console.log("User data successfully added to Firestore!");
+
+        // Redirect or do something after successful signup
+        // e.g., navigate("/login");
+
+        resetForm();
+      } catch (error) {
+        console.error("Error adding document: ", error);
+      }
     },
   });
 
@@ -217,46 +236,39 @@ const Signup = () => {
                 <input
                   type="file"
                   id="profileImage"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   name="profileImage"
-                  className="mt-1 block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-indigo-50 file:text-indigo-700
-                  hover:file:bg-indigo-100"
-                  onChange={handleFileChange}
-                  accept="image/*"
+                  onChange={(event) => handleFileChange(event)}
+                  onBlur={formik.handleBlur}
                 />
                 {profileImagePreview && (
                   <img
                     src={profileImagePreview}
                     alt="Profile Preview"
-                    className="mt-2 w-12 h-12 object-cover border border-gray-300 rounded-md"
+                    className="mt-2 w-32 h-32 object-cover rounded-full"
                   />
                 )}
+                {formik.touched.profileImage && formik.errors.profileImage && (
+                  <span className="text-red-600">{formik.errors.profileImage}</span>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  Zaten hesabınız var mı?
-                  <Link
-                    to="/login"
-                    className="font-medium text-indigo-600 hover:text-indigo-500 ml-1"
-                  >
-                    Giriş Yap
-                  </Link>
-                </div>
-              </div>
-              <div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Sign Up
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Sign Up
+              </button>
             </form>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Log in
+              </Link>
+            </p>
           </div>
-          
         </div>
       </div>
     </section>
