@@ -15,6 +15,7 @@ import Appointments from "../pages/DoctorPage/Appointments";
 import Profile from "../pages/DoctorPage/Profile";
 
 const Routers = () => {
+  
   return (
     <Routes>
       <Route path="/" element={<Home />} />

@@ -3,12 +3,17 @@ import { BsArrowRight } from "react-icons/bs";
 import { Link } from "react-router-dom";
 
 const ServiceCard = ({ item, index }) => {
-  const { name, description, bgColor, textColor } = item;
+  const { name, description, bgColor = '#ccc', textColor = '#000' } = item; // Varsayılan değerler
+
   return (
-    <div className="bg-slate-400 rounded-lg shadow-lg p-6 flex flex-col justify-between">
+    <div className="rounded-lg shadow-lg p-6 flex flex-col justify-between" style={{ backgroundColor: '#f5f5f5' }}>
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-3">{name}</h2>
-        <p className="text-base text-gray-600 mb-6">{description}</p>
+        <h2 className="text-2xl font-bold mb-3" style={{ color: textColor }}>
+          {name}
+        </h2>
+        <p className="text-base mb-6" style={{ color: textColor }}>
+          {description}
+        </p>
       </div>
       <div className="flex items-center justify-between mt-auto">
         <Link
@@ -34,7 +39,7 @@ ServiceCard.propTypes = {
   item: PropTypes.shape({
     name: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
-    bgColor: PropTypes.string.isRequired,
+    bgColor: PropTypes.string,
     textColor: PropTypes.string,
   }).isRequired,
   index: PropTypes.number.isRequired,

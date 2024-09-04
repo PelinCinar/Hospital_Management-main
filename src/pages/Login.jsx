@@ -1,9 +1,13 @@
 import { useFormik } from "formik";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
+import { useState } from "react";
+import { getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig"; // Firebase config dosyanızı doğru şekilde import edin
 
 const Login = () => {
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -18,13 +22,35 @@ const Login = () => {
         .required("Zorunlu alan!")
         .min(6, "Şifre en az 6 karakter olmalı!"),
     }),
-    onSubmit: (values, { resetForm }) => {
-      console.log(values);
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        // Firestore'dan kullanıcıyı sorguluyoruz
+        const q = query(
+          collection(db, "users"),
+          where("email", "==", values.email),
+          where("password", "==", values.password) // Şifreyi plain text olarak saklamak yerine hash kullanmanız önerilir
+        );
+        const querySnapshot = await getDocs(q);
 
-      const isAuthenticated = true; // Burada gerçek doğrulama yapılmalı.
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const authenticatedUser = userDoc.data();
 
-      if (isAuthenticated) {
-        navigate("/doctor-panel"); // Doktor paneline yönlendir.
+          if (authenticatedUser.role === "doctor") {
+            navigate("/doctor-panel");
+          } else if (authenticatedUser.role === "admin") {
+            navigate("/admin");
+          } else {
+            navigate("/user-dashboard");
+          }
+
+          setErrorMessage("");
+        } else {
+          setErrorMessage("Böyle bir kayıt mevcut değil!");
+        }
+      } catch (error) {
+        console.error("Giriş yaparken bir hata oluştu:", error);
+        setErrorMessage("Giriş yaparken bir hata oluştu!");
       }
 
       resetForm();
@@ -32,7 +58,12 @@ const Login = () => {
   });
 
   return (
-    <div className="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div className="bg-gray-100 flex items-center justify-center min-h-screen relative">
+      {errorMessage && (
+        <div className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded shadow">
+          {errorMessage}
+        </div>
+      )}
       <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8">
         <h2 className="text-2xl font-bold mb-6 text-center">
           Hello! Welcome Back

@@ -5,6 +5,7 @@ import signupImg from "../assets/images/signup.gif";
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../fireBaseConfig";
+import { users } from "../assets/data/users";
 
 const Signup = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -43,16 +44,15 @@ const Signup = () => {
         await addDoc(collection(db, "users"), {
           fullName: values.fullName,
           email: values.email,
-          password: values.password, // Consider hashing passwords before storing them
+          password: values.password, 
           role: values.role,
           gender: values.gender,
-          profileImage: values.profileImage ? values.profileImage.name : null, // You might need to upload this to Firebase Storage separately
+          profileImage: values.profileImage ? values.profileImage.name : null,
         });
 
         console.log("User data successfully added to Firestore!");
 
-        // Redirect or do something after successful signup
-        // e.g., navigate("/login");
+      
 
         resetForm();
       } catch (error) {
