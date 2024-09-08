@@ -26,7 +26,7 @@
   }
 
   .header {
-    @apply bg-[url("./assets/images/mask.png")] bg-no-repeat bg-center bg-cover w-full h-[100px] leading-[100px];
+    @apply bg-gradient-to-r from-[#79c8f234] to-[#e1caa83f] w-full h-[100px] leading-[100px] backdrop-blur-md;
   }
 
   .hero_section{
