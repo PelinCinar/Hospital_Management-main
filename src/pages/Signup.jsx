@@ -5,7 +5,6 @@ import signupImg from "../assets/images/signup.gif";
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../fireBaseConfig";
-import { users } from "../assets/data/users";
 
 const Signup = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -16,7 +15,6 @@ const Signup = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "",
       gender: "",
       profileImage: null,
     },
@@ -33,30 +31,25 @@ const Signup = () => {
       confirmPassword: Yup.string()
         .required("Zorunlu alan!")
         .oneOf([Yup.ref("password")], "Şifreler eşleşmiyor!"),
-      role: Yup.string()
-        .required("Rol seçimi zorunludur!"),
-      gender: Yup.string()
-        .required("Cinsiyet seçimi zorunludur!"),
+      gender: Yup.string().required("Cinsiyet seçimi zorunludur!"),
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        // Add user data to Firestore
+        // Kullanıcı verilerini Firestore'a ekle, rolü varsayılan olarak "client" yap
         await addDoc(collection(db, "users"), {
           fullName: values.fullName,
           email: values.email,
-          password: values.password, 
-          role: values.role,
+          password: values.password,
           gender: values.gender,
           profileImage: values.profileImage ? values.profileImage.name : null,
+          role: "client", // Varsayılan rol "client"
         });
 
-        console.log("User data successfully added to Firestore!");
-
-      
+        console.log("Kullanıcı başarıyla client olarak kaydedildi!");
 
         resetForm();
       } catch (error) {
-        console.error("Error adding document: ", error);
+        console.error("Belge eklenirken hata oluştu: ", error);
       }
     },
   });
@@ -64,8 +57,8 @@ const Signup = () => {
   const handleFileChange = (event) => {
     const file = event.currentTarget.files[0];
     formik.setFieldValue("profileImage", file);
-    
-    // Preview image
+
+    // Önizleme resmi
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfileImagePreview(reader.result);
@@ -79,7 +72,6 @@ const Signup = () => {
     <section className="px-5 xl:px-0">
       <div className="max-w-[1170px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2">
-          
           {/* img box */}
           <div className="hidden lg:block bg-primaryColor rounded-l-lg">
             <figure className="rounded-l-lg">
@@ -173,58 +165,36 @@ const Signup = () => {
                   value={formik.values.confirmPassword}
                   onBlur={formik.handleBlur}
                 />
-                {formik.touched.confirmPassword && formik.errors.confirmPassword && (
-                  <span className="text-red-600">{formik.errors.confirmPassword}</span>
-                )}
+                {formik.touched.confirmPassword &&
+                  formik.errors.confirmPassword && (
+                    <span className="text-red-600">
+                      {formik.errors.confirmPassword}
+                    </span>
+                  )}
               </div>
-              <div className="flex flex-col md:flex-row md:space-x-4">
-                <div className="flex-1 mb-4 md:mb-0">
-                  <label
-                    htmlFor="role"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Role
-                  </label>
-                  <select
-                    id="role"
-                    name="role"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    onChange={formik.handleChange}
-                    value={formik.values.role}
-                    onBlur={formik.handleBlur}
-                  >
-                    <option value="" label="Select a role" />
-                    <option value="doctor" label="Doctor" />
-                    <option value="patient" label="Patient" />
-                  </select>
-                  {formik.touched.role && formik.errors.role && (
-                    <span className="text-red-600">{formik.errors.role}</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <label
-                    htmlFor="gender"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Gender
-                  </label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    onChange={formik.handleChange}
-                    value={formik.values.gender}
-                    onBlur={formik.handleBlur}
-                  >
-                    <option value="" label="Select gender" />
-                    <option value="male" label="Male" />
-                    <option value="female" label="Female" />
-                    <option value="other" label="Other" />
-                  </select>
-                  {formik.touched.gender && formik.errors.gender && (
-                    <span className="text-red-600">{formik.errors.gender}</span>
-                  )}
-                </div>
+              <div>
+                <label
+                  htmlFor="gender"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  onChange={formik.handleChange}
+                  value={formik.values.gender}
+                  onBlur={formik.handleBlur}
+                >
+                  <option value="" label="Select gender" />
+                  <option value="male" label="Male" />
+                  <option value="female" label="Female" />
+                  <option value="other" label="Other" />
+                </select>
+                {formik.touched.gender && formik.errors.gender && (
+                  <span className="text-red-600">{formik.errors.gender}</span>
+                )}
               </div>
               <div>
                 <label
@@ -249,7 +219,9 @@ const Signup = () => {
                   />
                 )}
                 {formik.touched.profileImage && formik.errors.profileImage && (
-                  <span className="text-red-600">{formik.errors.profileImage}</span>
+                  <span className="text-red-600">
+                    {formik.errors.profileImage}
+                  </span>
                 )}
               </div>
               <button

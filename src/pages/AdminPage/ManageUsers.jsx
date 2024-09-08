@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../firebaseConfig'; // Firebase yapılandırma dosyasını doğru yol ile import edin
+import { db } from '../../firebaseConfig';
 import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const ManageUsers = () => {
@@ -23,14 +23,14 @@ const ManageUsers = () => {
         console.error("Error fetching users: ", error);
       }
     };
-    
+
     fetchUsers();
   }, []);
 
   const handleEdit = (user) => {
     setEditUser(user);
-    setNewName(user.name);
-    setNewEmail(user.email); // E-posta adresini formda göstermek için ayarlıyoruz
+    setNewName(user.fullName); // `user.name` yerine `user.fullName` kullanıyoruz
+    setNewEmail(user.email);
     setNewRole(user.role);
     setIsEditing(true);
   };
@@ -40,12 +40,13 @@ const ManageUsers = () => {
       try {
         const userDoc = doc(db, 'users', editUser.id);
         await updateDoc(userDoc, {
-          name: newName,
-          email: newEmail, // E-posta adresini güncelle
+          fullName: newName, // `name` yerine `fullName` kullanıyoruz
+          email: newEmail,
           role: newRole
         });
         setIsEditing(false);
-        // Güncellenmiş veriyi almak için tekrar fetchUsers çağırabilirsiniz
+
+        // Verileri güncel hale getirmek için tekrar çekiyoruz
         const querySnapshot = await getDocs(collection(db, 'users'));
         const usersList = querySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -62,7 +63,8 @@ const ManageUsers = () => {
     try {
       const userDoc = doc(db, 'users', id);
       await deleteDoc(userDoc);
-      // Silinen kullanıcıyı kaldırmak için tekrar fetchUsers çağırabilirsiniz
+
+      // Verileri güncel hale getirmek için tekrar çekiyoruz
       const querySnapshot = await getDocs(collection(db, 'users'));
       const usersList = querySnapshot.docs.map(doc => ({
         id: doc.id,

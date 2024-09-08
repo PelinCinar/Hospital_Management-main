@@ -1,5 +1,8 @@
-import { useFormik } from "formik";
-import * as Yup from "yup";
+import React from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 const Contact = () => {
   const formik = useFormik({
@@ -10,20 +13,27 @@ const Contact = () => {
       message: "",
     },
     validationSchema: Yup.object({
-     
       email: Yup.string()
         .required("E-mail zorunludur!")
         .email("Geçerli bir e-mail giriniz!"),
-      subject: Yup.string()
-     ,
+      subject: Yup.string(),
       message: Yup.string()
         .required("Mesaj zorunludur!")
         .min(10, "Mesaj en az 10 karakter olmalıdır!"),
     }),
-    onSubmit: (values, { resetForm }) => {
-      console.log(values);
-      // Burada form verilerini işleyebilirsiniz
-      resetForm();
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        // Add the contact message to Firestore
+        await addDoc(collection(db, 'contactMails'), {
+          ...values,
+          date: new Date(), // or use Firestore's server timestamp
+        });
+        alert('Mesajınız başarıyla gönderildi!');
+        resetForm();
+      } catch (error) {
+        console.error('Mesaj gönderilirken bir hata oluştu:', error);
+        alert('Mesaj gönderilirken bir hata oluştu.');
+      }
     },
   });
 
@@ -31,14 +41,11 @@ const Contact = () => {
     <section className="px-5 xl:px-0">
       <div className="max-w-[1170px] mx-auto py-10">
         <h3 className="text-headingColor text-[22px] leading-9 font-bold mb-10">
-        Contact <span className="text-primaryColor">US</span>
+          Contact <span className="text-primaryColor">US</span>
         </h3>
         <form className="space-y-4" onSubmit={formik.handleSubmit}>
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               E-mail
             </label>
             <input
@@ -56,10 +63,7 @@ const Contact = () => {
             )}
           </div>
           <div>
-            <label
-              htmlFor="subject"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
               Konu
             </label>
             <input
@@ -77,10 +81,7 @@ const Contact = () => {
             )}
           </div>
           <div>
-            <label
-              htmlFor="message"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="message" className="block text-sm font-medium text-gray-700">
               Mesaj
             </label>
             <textarea
@@ -105,7 +106,6 @@ const Contact = () => {
               Gönder
             </button>
           </div>
-     
         </form>
       </div>
     </section>

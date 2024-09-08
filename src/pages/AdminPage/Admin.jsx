@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { FiUsers, FiCalendar, FiBarChart2, FiLogOut } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiBarChart2, FiLogOut, FiUser, FiMail} from 'react-icons/fi'; // FiUser ikonu eklendi
 
 const Admin = () => {
   return (
@@ -35,17 +35,35 @@ const Admin = () => {
                 <FiBarChart2 /> Generate Reports
               </Link>
             </li>
+            <li>
+              <Link
+                to="/admin/profile" // Profile rotası
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiUser /> Add Profile {/* Doğru metin ve ikon */}
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/admin/admincontact" // Profile rotası
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiMail /> View Contact {/* Doğru metin ve ikon */}
+              </Link>
+            </li>
           </ul>
+          
         </nav>
         <div className="px-4 py-6 border-t border-gray-700">
           <Link
-            to="/home"  // Anasayfa yolunu belirtin
+            to="/home" // Anasayfa yolunu belirtin
             className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md"
           >
             <FiLogOut />
             Logout
           </Link>
         </div>
+        
       </aside>
 
       <main className="flex-1 bg-gray-100 p-8">

@@ -13,9 +13,11 @@ import ManageUsers from "../pages/AdminPage/ManageUsers";
 import DoctorPanel from "../pages/DoctorPage/DoctorPanel";
 import Appointments from "../pages/DoctorPage/Appointments";
 import Profile from "../pages/DoctorPage/Profile";
+import ClientAppointment from "../pages/ClientPage/ClientAppointment"; // Client Appointment eklendi
+import AddProfile from "../pages/AdminPage/AddProfile";
+import ContactView from "../pages/AdminPage/ContactView";
 
 const Routers = () => {
-  
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -32,6 +34,10 @@ const Routers = () => {
         <Route path="users" element={<ManageUsers />} />
         <Route path="appointments" element={<ViewAppointments />} />
         <Route path="reports" element={<GenerateReports />} />
+        <Route path="profile" element={<AddProfile/>} />
+        <Route path="admincontact" element={<ContactView />} />
+
+
       </Route>
 
       {/* Doktor Panel Rotaları */}
@@ -39,6 +45,9 @@ const Routers = () => {
         <Route path="appointments" element={<Appointments />} />
         <Route path="profile" element={<Profile />} />
       </Route>
+
+      {/* Client Panel Rotaları */}
+      <Route path="/client" element={<ClientAppointment />} /> {/* Client appointment */}
     </Routes>
   );
 };

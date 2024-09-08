@@ -2,7 +2,7 @@ import { useFormik } from "formik";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useState } from "react";
-import { getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig"; // Firebase config dosyanızı doğru şekilde import edin
 
 const Login = () => {
@@ -24,26 +24,42 @@ const Login = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        // Firestore'dan kullanıcıyı sorguluyoruz
-        const q = query(
+        // "users" koleksiyonunu kontrol et
+        const userQuery = query(
           collection(db, "users"),
           where("email", "==", values.email),
-          where("password", "==", values.password) // Şifreyi plain text olarak saklamak yerine hash kullanmanız önerilir
+          where("password", "==", values.password)
         );
-        const querySnapshot = await getDocs(q);
+        const userSnapshot = await getDocs(userQuery);
 
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          const authenticatedUser = userDoc.data();
+        // Eğer "users" koleksiyonunda kullanıcı yoksa, "doctors" koleksiyonunu kontrol et
+        let authenticatedUser = null;
+        if (!userSnapshot.empty) {
+          authenticatedUser = userSnapshot.docs[0].data();
+        } else {
+          const doctorQuery = query(
+            collection(db, "doctors"),
+            where("email", "==", values.email),
+            where("password", "==", values.password)
+          );
+          const doctorSnapshot = await getDocs(doctorQuery);
 
+          if (!doctorSnapshot.empty) {
+            authenticatedUser = doctorSnapshot.docs[0].data();
+          }
+        }
+
+        if (authenticatedUser) {
+          // Kullanıcının rolüne göre yönlendirme yap
           if (authenticatedUser.role === "doctor") {
             navigate("/doctor-panel");
           } else if (authenticatedUser.role === "admin") {
             navigate("/admin");
+          } else if (authenticatedUser.role === "patient") {
+            navigate("/client");
           } else {
             navigate("/user-dashboard");
           }
-
           setErrorMessage("");
         } else {
           setErrorMessage("Böyle bir kayıt mevcut değil!");
