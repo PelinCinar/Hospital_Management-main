@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useState } from "react";
 import { getDocs, collection, query, where } from "firebase/firestore";
-import { db } from "../firebaseConfig"; // Firebase config dosyanızı doğru şekilde import edin
+import { db } from "../firebaseConfig";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,15 +24,15 @@ const Login = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        // "users" koleksiyonunu kontrol et
+        // `users` koleksiyonundan email, password ve isActive sorgusu yapıyoruz
         const userQuery = query(
           collection(db, "users"),
           where("email", "==", values.email),
-          where("password", "==", values.password)
+          where("password", "==", values.password),
+          where("isActive", "==", true)  // Sadece aktif olan kullanıcılar
         );
         const userSnapshot = await getDocs(userQuery);
 
-        // Eğer "users" koleksiyonunda kullanıcı yoksa, "doctors" koleksiyonunu kontrol et
         let authenticatedUser = null;
         if (!userSnapshot.empty) {
           authenticatedUser = userSnapshot.docs[0].data();
@@ -40,7 +40,8 @@ const Login = () => {
           const doctorQuery = query(
             collection(db, "doctors"),
             where("email", "==", values.email),
-            where("password", "==", values.password)
+            where("password", "==", values.password),
+            where("isActive", "==", true)  // Doktorlar için de aynı isActive kontrolü
           );
           const doctorSnapshot = await getDocs(doctorQuery);
 
@@ -50,7 +51,6 @@ const Login = () => {
         }
 
         if (authenticatedUser) {
-          // Kullanıcının rolüne göre yönlendirme yap
           if (authenticatedUser.role === "doctor") {
             navigate("/doctor-panel");
           } else if (authenticatedUser.role === "admin") {
@@ -58,11 +58,11 @@ const Login = () => {
           } else if (authenticatedUser.role === "patient") {
             navigate("/client");
           } else {
-            navigate("/user-dashboard");
+            navigate("/customer-panel");
           }
           setErrorMessage("");
         } else {
-          setErrorMessage("Böyle bir kayıt mevcut değil!");
+          setErrorMessage("Böyle bir kayıt mevcut değil veya hesabınız pasif durumda!");
         }
       } catch (error) {
         console.error("Giriş yaparken bir hata oluştu:", error);
@@ -129,7 +129,7 @@ const Login = () => {
             <div className="text-sm">
               Hesabınız yok mu?
               <Link
-                to="/register"
+                to="/signup"
                 className="font-medium text-indigo-600 hover:text-indigo-500 ml-1"
               >
                 Hesap oluştur

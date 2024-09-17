@@ -5,6 +5,8 @@ import signupImg from "../assets/images/signup.gif";
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../fireBaseConfig";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";  // Toastify'nin CSS'ini de ekleyin.
 
 const Signup = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -45,10 +47,12 @@ const Signup = () => {
           role: "client", // Varsayılan rol "client"
         });
 
-        console.log("Kullanıcı başarıyla client olarak kaydedildi!");
+        // Başarılı mesajı göster
+        toast.success("Kullanıcı başarıyla kaydedildi!");
 
         resetForm();
       } catch (error) {
+        toast.error("Belge eklenirken hata oluştu!");
         console.error("Belge eklenirken hata oluştu: ", error);
       }
     },
@@ -226,18 +230,17 @@ const Signup = () => {
               </div>
               <button
                 type="submit"
-                className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-6 w-full bg-primaryColor text-white py-2 px-4 rounded-lg"
               >
-                Sign Up
+                Create an account
               </button>
             </form>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            {/* Toastify için ToastContainer ekleyin */}
+            <ToastContainer />
+            <p className="text-gray-600 mt-4">
               Already have an account?{" "}
-              <Link
-                to="/login"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Log in
+              <Link to="/login" className="text-primaryColor">
+                Login
               </Link>
             </p>
           </div>

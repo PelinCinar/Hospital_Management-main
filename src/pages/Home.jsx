@@ -3,7 +3,7 @@ import ServiceList from "../components/Services/ServiceList";
 import featureImg from "../assets/images/feature-img.png";
 import faqImg from "../assets/images/faq-img.png";
 import videoIcon from "../assets/images/video-icon.png";
-import avatarIcon from "../assets/images/avatar-icon.png";
+import avatarIcon from "../assets/images/patient-avatar.png";
 import { Link } from "react-router-dom";
 import DoctorList from "../components/Doctors/DoctorList";
 import FaqList from "../components/Faq/FaqList";
@@ -90,7 +90,7 @@ const Home = () => {
             </div>
             {/*===== Feature img====*/}
             <div className="relative z-10 xl:w-[770px] flex justify-end mt-[50px] lg:mt-0">
-              <img src={featureImg} className="w-3/4 " alt="" />
+              <img src={featureImg} className="w-3/4  rounded-lg  " alt="" />
               <div className="w-[150px] lg:w-[248px] bg-white absolute bottom-[50px] left-0 md:botoom-[100px] md:left-5 z-20 p-2 pb-3 lg:pt-4 lg:pb-[26px] rounded-[10px] ">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[6px] lg:gap-3">

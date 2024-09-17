@@ -1,10 +1,10 @@
-// src/pages/Admin/ViewAppointments.jsx
+// src/pages/DoctorPage/AppointmentsCalendar.jsx
 import React, { useState, useEffect } from 'react';
 import { Calendar, Badge } from 'antd';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; // Firestore'ı doğru bir şekilde import edin
 
-const ViewAppointments = () => {
+const AppointmentsCalendar = () => {
   const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ const ViewAppointments = () => {
         id: appointment.id,
         patient: appointment.name,
         time: appointment.time,
-        doctor: appointment.name|| "Unknown", // Eğer doktor adı eksikse 'Unknown' yaz
       }));
   };
 
@@ -43,8 +42,8 @@ const ViewAppointments = () => {
         {listData.map(item => (
           <li key={item.id} className="mb-1">
             <Badge
-              status="processing"
-              text={`${item.patient} with Dr. ${item.doctor} at ${item.time}`}
+              status="success"
+              text={`${item.patient} at ${item.time}`}
               className="block text-sm"
             />
           </li>
@@ -67,4 +66,4 @@ const ViewAppointments = () => {
   );
 };
 
-export default ViewAppointments;
+export default AppointmentsCalendar;

@@ -26,8 +26,13 @@
   }
 
   .header {
-    @apply bg-gradient-to-r from-[#79c8f234] to-[#e1caa83f] w-full h-[100px] leading-[100px] backdrop-blur-md;
+    @apply w-full h-[100px] leading-[100px] backdrop-blur-md;
+    background-image: url('/src/assets/images/Blur.png'); /* Update the path to your actual image */
+    background-size: cover; /* Ensure the image covers the entire header */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Prevent the image from repeating */
   }
+  
 
   .hero_section{
     @apply bg-[url("./assets/images/hero-bg.png")] bg-no-repeat bg-center bg-cover

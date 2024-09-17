@@ -50,7 +50,7 @@ const Header = () => {
   return (
     <header ref={headerRef} className="header flex items-center">
       <div className="container">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between xl">
           {/* Logo */}
           <Link to="/home">
             <img src={logo} alt="Logo" className="cursor-pointer" />

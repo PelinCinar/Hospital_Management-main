@@ -3,6 +3,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../fireBaseConfig"; // Firestore yapılandırmanız
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Modal from "../../UI/Modal";
 
 const AddProfile = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const AddProfile = () => {
     profileImage: "",
     department: ""
   });
+  
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
 
   const handleChange = (e) => {
     setFormData({
@@ -29,6 +32,10 @@ const AddProfile = () => {
       const doctorRef = collection(db, "users"); // Firestore'da "users" koleksiyonu
       await addDoc(doctorRef, formData); // Tüm form verisini kaydediyoruz
       toast.success("Doctor added successfully"); // Başarı mesajı
+
+      // Modal'ı açıyoruz
+      setIsModalOpen(true);
+
       // Formu temizleme
       setFormData({
         fullName: "",
@@ -46,85 +53,103 @@ const AddProfile = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-8">
+    <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-8">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Add Doctor Profile</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            placeholder="Enter full name"
-            required
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              placeholder="Enter full name"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              placeholder="Enter email address"
+              required
+            />
+          </div>
         </div>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            placeholder="Enter email address"
-            required
-          />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              placeholder="Enter password"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Gender</label>
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              required
+            >
+              <option value="" disabled>
+                Select Gender
+              </option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
         </div>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            placeholder="Enter password"
-            required
-          />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Department</label>
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              required
+            >
+              <option value="" disabled>
+                Select Department
+              </option>
+              <option value="Cardiology">Cardiology</option>
+              <option value="Neurology">Neurology</option>
+              <option value="Pediatrics">Pediatrics</option>
+              <option value="Dermatology">Dermatology</option>
+              <option value="Gynecology">Gynecology</option>
+              <option value="Ophthalmology">Ophthalmology</option>
+              <option value="Orthopedics">Orthopedics</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-gray-700 text-lg font-medium mb-2">Profile Image URL</label>
+            <input
+              type="text"
+              name="profileImage"
+              value={formData.profileImage}
+              onChange={handleChange}
+              className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+              placeholder="Enter profile image URL"
+            />
+          </div>
         </div>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Gender</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            required
-          >
-            <option value="" disabled>
-              Select Gender
-            </option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </div>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Department</label>
-          <input
-            type="text"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            placeholder="Enter department"
-            required
-          />
-        </div>
-        <div className="mb-5">
-          <label className="block text-gray-700 text-lg font-medium mb-2">Profile Image URL</label>
-          <input
-            type="text"
-            name="profileImage"
-            value={formData.profileImage}
-            onChange={handleChange}
-            className="w-full h-12 px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            placeholder="Enter profile image URL"
-          />
-        </div>
-        <div>
+
+        <div className="mt-6">
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 focus:outline-none focus:bg-blue-700 transition duration-300 ease-in-out"
@@ -133,6 +158,10 @@ const AddProfile = () => {
           </button>
         </div>
       </form>
+      
+   
+
+      {/* ToastContainer ile Toast Mesajlarını Gösterme */}
       <ToastContainer
         position="top-right"
         autoClose={5000}

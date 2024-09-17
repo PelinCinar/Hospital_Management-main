@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiCalendar, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiCalendar, FiUser, FiLogOut, FiList } from 'react-icons/fi';
 import { Link, Outlet } from 'react-router-dom';
 
 const DoctorPanel = () => {
@@ -21,11 +21,37 @@ const DoctorPanel = () => {
             </li>
             <li>
               <Link
+                to="appointmentsedit"
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiCalendar /> AppointmentsEdit
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="appointmentcalendar"
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiCalendar /> AppointmentsCalendar
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="profile"
                 className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
               >
                 <FiUser /> Profile
               </Link>
+              
+            </li>
+            <li>
+              <Link
+                to="reportview"
+                className="flex items-center gap-3 text-lg hover:bg-gray-700 p-2 rounded-md"
+              >
+                <FiList /> Raporları Görüntüle
+              </Link>
+              
             </li>
           </ul>
         </nav>

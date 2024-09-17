@@ -1,44 +1,71 @@
-import  { useState } from 'react'
-import avatar from "../../assets/images/avatar-icon.png"
-import { formateDate } from '../../utils/formateDate'
-import {AiFillStar} from "react-icons/ai"
-import FeedbackForm from './FeedbackForm'
+import { useState, useEffect } from 'react';
+import avatar from "../../assets/images/avatar-icon.png";
+import { formateDate } from '../../utils/formateDate';
+import { AiFillStar } from "react-icons/ai";
+import FeedbackForm from './FeedbackForm';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';  // Firestore yapılandırmasını içe aktarın
 
 const Feedback = () => {
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [reviews, setReviews] = useState([]);
 
- const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'reviews'), (snapshot) => {
+      const reviewsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setReviews(reviewsData);
+    });
+
+    // Bileşen unmounted olduğunda Firestore'dan ayrıl
+    return () => unsubscribe();
+  }, []);
+
+  // Yorum ekleme fonksiyonu
+  const addReview = (newReview) => {
+    setReviews([newReview, ...reviews]); // Yeni yorumu yerel state'e ekle
+    setShowFeedbackForm(false); // Formu kapat
+  };
 
   return (
     <div>
       <div className='mb-[50px]'>
-       <h4 className='text-[20px] leading-[30px] font-bold text-headingColor mb-[30px]'>All reviews (272)</h4>
+        <h4 className='text-[20px] leading-[30px] font-bold text-headingColor mb-[30px]'>All reviews ({reviews.length})</h4>
 
-       <div className='flex justify-between gap-10 mb-[30px]'>
-        <div className='flex gap-3'>
-          <figure className='w-10 h-10 rounded-full'>
-            <img className='w-full' src={avatar} alt=''/>
-          </figure>
+        {reviews.map((review) => (
+          <div className='flex justify-between gap-10 mb-[30px]' key={review.id}>
+            <div className='flex gap-3'>
+              <figure className='w-10 h-10 rounded-full'>
+                <img className='w-full' src={avatar} alt='' />
+              </figure>
 
-          <div>
-            <h5 className='text-[16px] leading-6 text-primaryColor font-bold'>Ali ahmed</h5>
-            <p className='text-[14px] leading-6 text-textColor'>{formateDate("02-14-2023")} </p>
-            <p className='text_para mt-3 font-medium text-[15px]'>Good services,highly recommended</p>
+              <div>
+                <h5 className='text-[16px] leading-6 text-primaryColor font-bold'>{review.name}</h5>
+                <p className='text-[14px] leading-6 text-textColor'>{formateDate(review.date)}</p>
+                <p className='text_para mt-3 font-medium text-[15px]'>{review.comment}</p>
+              </div>
+            </div>
+
+            <div className='flex gap-1'>
+              {[...Array(review.rating).keys()].map((_, index) => (
+                <AiFillStar key={index} color="#0067FF" />
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div className='flex gap-1'>
-            {[...Array(5).keys()].map((_,index) => <AiFillStar key={index} color="#0067FF" /> )}
-        </div>
-       </div>
+        ))}
       </div>
 
-     {!showFeedbackForm &&  <div className='text-center'>
-        <button className='btn' onClick={() => setShowFeedbackForm(true)}>Give Feedback</button>
-      </div>}
+      {!showFeedbackForm && (
+        <div className='text-center'>
+          <button className='btn' onClick={() => setShowFeedbackForm(true)}>Give Feedback</button>
+        </div>
+      )}
 
-      {showFeedbackForm && <FeedbackForm />}
+      {showFeedbackForm && <FeedbackForm addReview={addReview} />}
     </div>
-  )
-}
+  );
+};
 
-export default Feedback
+export default Feedback;

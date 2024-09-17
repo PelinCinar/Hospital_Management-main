@@ -28,7 +28,7 @@ const DoctorDetails = () => {
                     4.8
                   </span>
                   <span className="text-[14px] leading-5 lg:text-[16px] lg:leading-7 font-[400] text-textColor">
-                    (272)
+                 
                   </span>
                 </div>
                 <p className="text_para leading-5 md:text-[15px] lg:max-w-[390px]">

@@ -1,14 +1,16 @@
-// AddUsers.jsx
 import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 import { db } from "../../fireBaseConfig"; // Firestore yapılandırmanızı içe aktarın
 
 const AddUsers = () => {
   const [loading, setLoading] = useState(false);
+  const [isFetched, setIsFetched] = useState(false); // Yeni state: Kullanıcıları bir kez alıp işleme için
 
   useEffect(() => {
     const fetchUsersFromFirebase = async () => {
+      if (isFetched) return; // Eğer kullanıcılar zaten işlendi ise tekrar çalıştırma
       setLoading(true); // İşlem başladığında loading'i true yapıyoruz
+      
       try {
         const userRef = collection(db, "users");
         const querySnapshot = await getDocs(userRef);
@@ -34,6 +36,8 @@ const AddUsers = () => {
             console.log(`User ${user.email} already exists, skipping.`);
           }
         });
+
+        setIsFetched(true); // Kullanıcılar işlendi, tekrar çalışmayacak
         setLoading(false); // İşlem bitince loading'i false yapıyoruz
       } catch (error) {
         console.error("Error fetching or adding users: ", error);
@@ -42,7 +46,7 @@ const AddUsers = () => {
     };
 
     fetchUsersFromFirebase();
-  }, []);
+  }, [isFetched]); // Kullanıcıların bir defa işlendiğini kontrol et
 
   return (
     <div>
