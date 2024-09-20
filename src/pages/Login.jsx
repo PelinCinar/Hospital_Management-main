@@ -2,10 +2,15 @@ import { useFormik } from "formik";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useState } from "react";
-import { getDocs, collection, query, where } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "../redux/slices/userSlice";
 
 const Login = () => {
+  const userData = useSelector((state) => state.user)
+  const dispatch = useDispatch()
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -24,45 +29,42 @@ const Login = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        // `users` koleksiyonundan email, password ve isActive sorgusu yapıyoruz
-        const userQuery = query(
-          collection(db, "users"),
-          where("email", "==", values.email),
-          where("password", "==", values.password),
-          where("isActive", "==", true)  // Sadece aktif olan kullanıcılar
+        const auth = getAuth();
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          values.email,
+          values.password
         );
-        const userSnapshot = await getDocs(userQuery);
+        const user = userCredential.user;
+       
+        // Firestore'dan kullanıcının rol bilgisine ulaş
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        console.log("User signed in:",userDoc.data());
+        dispatch(setUser(userDoc.data()));
 
-        let authenticatedUser = null;
-        if (!userSnapshot.empty) {
-          authenticatedUser = userSnapshot.docs[0].data();
+        // Kullanıcı rolüne göre yönlendirme
+
+        if (userDoc.data().role === "doctor") {
+          navigate("/doctor-panel");
+        } else if (userDoc.data().role === "admin") {
+          navigate("/admin");
+        } else if (userDoc.data().role === "client") {
+          navigate("/customer-panel");
         } else {
-          const doctorQuery = query(
-            collection(db, "doctors"),
-            where("email", "==", values.email),
-            where("password", "==", values.password),
-            where("isActive", "==", true)  // Doktorlar için de aynı isActive kontrolü
-          );
-          const doctorSnapshot = await getDocs(doctorQuery);
-
-          if (!doctorSnapshot.empty) {
-            authenticatedUser = doctorSnapshot.docs[0].data();
-          }
+          navigate("/admin");
         }
 
-        if (authenticatedUser) {
-          if (authenticatedUser.role === "doctor") {
-            navigate("/doctor-panel");
-          } else if (authenticatedUser.role === "admin") {
-            navigate("/admin");
-          } else if (authenticatedUser.role === "patient") {
-            navigate("/client");
-          } else {
-            navigate("/customer-panel");
-          }
-          setErrorMessage("");
+        setErrorMessage("");
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const userRole = userData.role;
+          console.log("Kullanıcının rolü:", userRole);
+
+          // Rolü geri döndürebilirsin ya da başka bir işlem yapabilirsin
+          return userRole;
         } else {
-          setErrorMessage("Böyle bir kayıt mevcut değil veya hesabınız pasif durumda!");
+          console.error("Kullanıcı dokümanı bulunamadı.");
+          return null;
         }
       } catch (error) {
         console.error("Giriş yaparken bir hata oluştu:", error);
@@ -72,7 +74,6 @@ const Login = () => {
       resetForm();
     },
   });
-
   return (
     <div className="bg-gray-100 flex items-center justify-center min-h-screen relative">
       {errorMessage && (

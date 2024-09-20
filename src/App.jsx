@@ -4,9 +4,9 @@ import Layout from "./layout/Layout";
 import AddUsers from "./pages/AdminPage/AddUsers";
 
 const App = () => {
+  
   return (
     <div>
-      {/* <Provider store={store}></Provider> */}
       <Layout />;
       <AddUsers />
   
@@ -15,3 +15,14 @@ const App = () => {
 };
 
 export default App;
+//acaba burada direkt const App const { user } = useSelector((store) => store.user);
+//yapıp  const router = createBrowserRouter([
+    // {
+    //   path: "/",
+    //   element: <Layout />,
+    //   children: [
+    //     { path: "/", element: <Home /> },
+    //     {
+    //       path: "/profile",
+    //       element: user ? <Profile
+    //bu şekilde routerları buradn mı yapsam ? ? 

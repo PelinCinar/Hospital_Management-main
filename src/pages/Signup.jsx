@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import * as Yup from "yup";
 import signupImg from "../assets/images/signup.gif";
 import { useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../fireBaseConfig";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";  // Toastify'nin CSS'ini de ekleyin.
+import "react-toastify/dist/ReactToastify.css";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
 const Signup = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -35,21 +36,26 @@ const Signup = () => {
         .oneOf([Yup.ref("password")], "Şifreler eşleşmiyor!"),
       gender: Yup.string().required("Cinsiyet seçimi zorunludur!"),
     }),
+
     onSubmit: async (values, { resetForm }) => {
       try {
-        // Kullanıcı verilerini Firestore'a ekle, rolü varsayılan olarak "client" yap
-        await addDoc(collection(db, "users"), {
+        const auth = getAuth();
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          values.email,
+          values.password
+        );
+        const user = userCredential.user;
+        // Firestore'da kullanıcıya varsayılan rolü ekle
+        await setDoc(doc(db, "users", user.uid),({
+          email: user.email,
+          role: "client", // Varsayılan rol
           fullName: values.fullName,
-          email: values.email,
-          password: values.password,
           gender: values.gender,
           profileImage: values.profileImage ? values.profileImage.name : null,
-          role: "client", // Varsayılan rol "client"
-        });
-
-        // Başarılı mesajı göster
+          createdAt: serverTimestamp(),
+        }));
         toast.success("Kullanıcı başarıyla kaydedildi!");
-
         resetForm();
       } catch (error) {
         toast.error("Belge eklenirken hata oluştu!");
@@ -71,7 +77,6 @@ const Signup = () => {
       reader.readAsDataURL(file);
     }
   };
-
   return (
     <section className="px-5 xl:px-0">
       <div className="max-w-[1170px] mx-auto">
