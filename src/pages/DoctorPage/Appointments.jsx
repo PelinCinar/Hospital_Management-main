@@ -1,55 +1,80 @@
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Firestore'ı doğru bir şekilde import edin
+import React, { useEffect, useState } from "react";
+import { db } from "../../firebaseConfig"; // Import your Firebase config
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { Card } from 'antd';
+import PropTypes from "prop-types"; 
+import "antd/dist/antd"; // Ensure proper Ant Design styles are loaded
+import '../../index.css'; // Tailwind CSS styles
 
-const Appointments = () => {
+const Appointments = ({ loggedInDoctorUID }) => {
   const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAppointments = async () => {
+      if (!loggedInDoctorUID) {
+        setLoading(false);
+        return; // Exit if loggedInDoctorUID is not defined
+      }
+  
+      setLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, 'appointments'));
-        const appointmentsList = querySnapshot.docs.map(doc => ({
+        const appointmentsCollection = collection(db, "appointments");
+        const q = query(appointmentsCollection, where("doctorUID", "==", loggedInDoctorUID));
+        const appointmentSnapshot = await getDocs(q);
+  
+        // Convert Firebase data to a usable format
+        const appointmentList = appointmentSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
+          createdAt: doc.data().createdAt.toDate(), // Convert Firebase Timestamp to JavaScript Date
         }));
-
-        setAppointments(appointmentsList);
+  
+        setAppointments(appointmentList);
       } catch (error) {
-        console.error('Error fetching appointments: ', error);
+        console.error("Error fetching appointments: ", error);
+      } finally {
+        setLoading(false);
       }
     };
-
+  
     fetchAppointments();
-  }, []);
+  }, [loggedInDoctorUID]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading state
+  }
+
+  if (!loggedInDoctorUID) {
+    return <div>No doctor information available.</div>; // Handle case where UID is not provided
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Appointments</h2>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2 text-left">Patient</th>
-            <th className="border px-4 py-2 text-left">Date</th>
-            <th className="border px-4 py-2 text-left">Time</th>
-            <th className="border px-4 py-2 text-left">Disease</th>
-            <th className="border px-4 py-2 text-left">Doctor</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="p-4">
+      <h1 className="text-2xl mb-4">Doctor's Appointments</h1>
+      {appointments.length === 0 ? (
+        <p>No appointments found.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {appointments.map((appointment) => (
-            <tr key={appointment.id}>
-              <td className="border px-4 py-2">{appointment.name}</td>
-              <td className="border px-4 py-2">{appointment.date}</td>
-              <td className="border px-4 py-2">{appointment.time}</td>
-              <td className="border px-4 py-2">{appointment.disease}</td>
-              <td className="border px-4 py-2">{appointment.doctor}</td>
-            </tr>
+            <Card
+              key={appointment.id} // Use unique ID for each appointment
+              className="shadow-lg bg-white"
+              title={`Patient: ${appointment.fullName}`}
+            >
+              <p>Appointment Date: {appointment.date}</p>
+              <p>Department: {appointment.department}</p>
+              <p>Time: {appointment.time}</p>
+            </Card>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   );
+};
+
+Appointments.propTypes = {
+  loggedInDoctorUID: PropTypes.string.isRequired, // loggedInDoctorUID should be a required string
 };
 
 export default Appointments;

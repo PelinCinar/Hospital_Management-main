@@ -1,62 +1,112 @@
-import { useState } from "react";
-import DoctorCard from "../../components/Doctors/DoctorCard";
-import { doctors } from "../../assets/data/doctors";
+import { useState, useEffect } from "react";
+import { db } from "../../firebaseconfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Card, Input, Button, Spin } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import "antd/dist/reset.css"; // Ant Design varsayılan stil dosyalarını unutmayın
+import { Link } from "react-router-dom";
+
+const { Meta } = Card;
 
 const Doctors = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredDoctors, setFilteredDoctors] = useState(doctors);
-  const [noDoctorFound, setNoDoctorFound] = useState(false); // Doktor bulunamama durumu için state
+  const [doctors, setDoctors] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
+  const [noDoctorFound, setNoDoctorFound] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'users'));
+        const doctorsList = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(user => user.role === 'doctor');
+
+        setDoctors(doctorsList);
+        setFilteredDoctors(doctorsList);
+        setNoDoctorFound(doctorsList.length === 0);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+        setError("Doktorları yüklerken bir hata oluştu.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
     const filtered = doctors.filter((doctor) =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor.fullName.toLowerCase().includes(value.toLowerCase())
     );
+
     setFilteredDoctors(filtered);
-    
-    // Eğer sonuç yoksa "Böyle bir doktor mevcut değildir" mesajını göster
     setNoDoctorFound(filtered.length === 0);
   };
 
   return (
-    <>
-      <section className="bg-[#fff9ea]">
-        <div className="container text-center">
-          <h2 className="heading">Find a Doctor</h2>
-          <div className="max-w-[570px] mt-[30px] mx-auto bg-[#0066ff2c] rounded-md flex items-center justify-between">
-            <input
-              type="search"
-              className="py-4 pl-4 pr-2 bg-transparent w-full focus:outline-none cursor-pointer placeholder:text-textColor"
-              placeholder="Search Doctor"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              className="btn mt-0 rounded-[0px] rounded-r-md"
-              onClick={handleSearch}
-            >
-              Search
-            </button>
-          </div>
-        </div>
-      </section>
+    <div className="container" style={{ padding: "20px", fontSize: "25px" }}>
+      <h2 style={{ textAlign: "center", fontSize: "25px" }}>Find a Doctor</h2>
 
-      <section>
-        <div className="container">
-          {/* Eğer doktor bulunamazsa mesajı göster */}
-          {noDoctorFound ? (
-            <div className="text-center mt-10 text-red-500">
-              Böyle bir doktor mevcut değildir.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filteredDoctors.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} />
-              ))}
-            </div>
-          )}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px", fontSize: "25px" }}>
+        <Input
+          placeholder="Search Doctor"
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{ margin: "10px", padding: "2px", width: "400px", marginRight: "10px", fontSize: "25px" }}
+        />
+        <Button type="primary" style={{ fontSize: "25px", margin: "10px", padding: "20px" }} icon={<SearchOutlined />}>
+          Search
+        </Button>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <Spin size="large" />
         </div>
-      </section>
-    </>
+      ) : error ? (
+        <div style={{ textAlign: "center", marginTop: "20px", color: "red" }}>
+          {error}
+        </div>
+      ) : noDoctorFound ? (
+        <div style={{ textAlign: "center", marginTop: "20px", color: "red" }}>
+          Böyle bir doktor mevcut değildir.
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 244fr))", // Kart boyutunu artır
+            gap: "10px",
+            marginTop: "30px",
+          }}
+        >
+          {filteredDoctors.map((doctor) => (
+            <Link to={`/doctors/${doctor.id}`} key={doctor.id}>
+              <Card
+                hoverable
+                cover={
+                  <img
+                    alt={doctor.fullName}
+                    src={doctor.profileImage}
+                    style={{ height: "250px", objectFit: "cover" }} // Resim boyutunu artır
+                  />
+                }
+                style={{ width: 320, height: "350px" }} // Kart boyutunu artır
+              >
+                <Meta title={doctor.fullName} description={doctor.department} />
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

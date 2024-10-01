@@ -26,6 +26,7 @@ const profileSlice = createSlice({
     fullName: '',
     department: '',
     profileImage: '',
+    availability: 'available',
     status: 'idle',
     error: null,
   },

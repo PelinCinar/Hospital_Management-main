@@ -55,7 +55,7 @@ const CustomerProfile = () => {
         <p className="mb-2"><span className="font-semibold">Ad:</span> {patient.fullName}</p>
         <p className="mb-2"><span className="font-semibold">E-posta:</span> {patient.email}</p>
         <p className="mb-2"><span className="font-semibold">Cinsiyet:</span> {patient.gender}</p>
-        <p className="mb-2"><span className="font-semibold">Doğum Tarihi:</span> {patient.profileImage}</p>
+        <p className="mb-2"><span className="font-semibold">Doğum Tarihi:</span> {patient.password}</p>
         <p><span className="font-semibold">Adres:</span> {patient.address}</p>
       </div>
     </div>

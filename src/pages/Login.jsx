@@ -43,6 +43,7 @@ const Login = () => {
         dispatch(setUser(userDoc.data()));
 
         // Kullanıcı rolüne göre yönlendirme
+    
 
         if (userDoc.data().role === "doctor") {
           navigate("/doctor-panel");

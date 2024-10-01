@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
-import CalendarComponent from "./CalendarComponent";
+import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import authentication functions
+import CalendarComponent from "./CalendarComponent"; // Takvim bileşeni
 import moment from "moment";
-import { collection, addDoc, Timestamp, getDocs } from "firebase/firestore";
-import { db } from "../../firebaseConfig"; // Firestore'ı doğru şekilde import edin
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 const GetAppointmentPage = () => {
   const [selectedDate, setSelectedDate] = useState(moment());
@@ -10,34 +18,42 @@ const GetAppointmentPage = () => {
     fullName: "",
     email: "",
     time: "",
-    department:"",
+    department: "",
     doctor: "",
   });
   const [showForm, setShowForm] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [diseaseOptions, setDiseaseOptions] = useState([]);
+  const [availableTimes, setAvailableTimes] = useState([]);
+  const [userId, setUserId] = useState(null); // Kullanıcı ID'si için durum
+
+  useEffect(() => {
+    const auth = getAuth(); // Firebase Authentication'ı al
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid); // Giriş yapan kullanıcının UID'sini ayarla
+      } else {
+        setUserId(null); // Kullanıcı oturum açmamış
+      }
+    });
+
+    // Temizlik işlemi
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchDoctorsAndDiseases = async () => {
-      try {
-        const userSnapshot = await getDocs(collection(db, "users"));
-        const userList = userSnapshot.docs.map((doc) => doc.data());
+      const userSnapshot = await getDocs(collection(db, "users"));
+      const userList = userSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-        const doctorList = userList.filter((user) => user.role === "doctor");
-        const diseaseList = [
-          ...new Set(userList.map((user) => user.department)),
-        ];
-        const filteredDoctors = doctors.filter(
-          (doctor) => doctor.department === formValues.disease
-        );
+      const doctorList = userList.filter((user) => user.role === "doctor");
+      const diseaseList = [...new Set(userList.map((user) => user.department))];
 
-        console.log("Filtered Doctors:", filteredDoctors);
-
-        setDoctors(doctorList);
-        setDiseaseOptions(diseaseList);
-      } catch (error) {
-        console.error("Error fetching data: ", error);
-      }
+      setDoctors(doctorList);
+      setDiseaseOptions(diseaseList);
     };
 
     fetchDoctorsAndDiseases();
@@ -56,25 +72,55 @@ const GetAppointmentPage = () => {
     }));
   };
 
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (formValues.doctor && selectedDate) {
+        const formattedDate = selectedDate.format("YYYY-MM-DD");
+
+        const availabilityQuery = query(
+          collection(db, "availability"),
+          where("doctorId", "==", formValues.doctor),
+          where("date", "==", formattedDate)
+        );
+
+        const availabilitySnapshot = await getDocs(availabilityQuery);
+        if (!availabilitySnapshot.empty) {
+          const availabilityData = availabilitySnapshot.docs[0].data();
+          const slots = availabilityData.slots || [];
+          setAvailableTimes(slots);
+        } else {
+          setAvailableTimes([]);
+        }
+      }
+    };
+
+    fetchAvailability();
+  }, [formValues.doctor, selectedDate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formValues.time) {
+      alert("Lütfen bir randevu saati seçin.");
+      return;
+    }
 
     try {
       const appointmentData = {
         ...formValues,
         date: selectedDate.format("YYYY-MM-DD"),
-        createdAt: Timestamp.now(), // Firestore timestamp kullanarak zaman damgası ekliyoruz
+        createdAt: Timestamp.now(),
+        userId: userId, // Kullanıcının UID'sini randevu verilerine ekle
       };
 
       await addDoc(collection(db, "appointments"), appointmentData);
-
       alert("Randevu Oluşturuldu");
       setShowForm(false);
       setFormValues({
         fullName: "",
         email: "",
         time: "",
-        department:"",
+        department: "",
         doctor: "",
       });
     } catch (error) {
@@ -83,14 +129,9 @@ const GetAppointmentPage = () => {
     }
   };
 
-  // Doktorları seçilen departmana göre filtrele
   const filteredDoctors = doctors.filter(
-    (doctor) => doctor.department === formValues.disease
+    (doctor) => doctor.department === formValues.department
   );
-
-  console.log("Form Values:", formValues);
-  console.log("Doctors List:", doctors);
-  console.log("Filtered Doctors:", filteredDoctors);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -106,32 +147,6 @@ const GetAppointmentPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ad
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formValues.name}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    E-posta
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formValues.email}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Randevu Tarihi
                   </label>
                   <input
@@ -145,22 +160,44 @@ const GetAppointmentPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Randevu Saati
                   </label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={formValues.time}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    required
-                  />
+                  <div className="space-y-2">
+                    {availableTimes.length > 0 ? (
+                      availableTimes.map((time) => {
+                        const { startTime, endTime } = time; 
+                        const currentTime = `${startTime}-${endTime}`; 
+                        const isSelected = formValues.time === currentTime;
+
+                        return (
+                          <div key={currentTime} className="flex items-center">
+                            <input
+                              type="radio" 
+                              name="appointmentTime"
+                              checked={isSelected}
+                              onChange={() => {
+                                setFormValues((prev) => ({
+                                  ...prev,
+                                  time: currentTime, 
+                                }));
+                              }}
+                            />
+                            <label className="ml-2">{`${startTime} - ${endTime}`}</label>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center">
+                        Seçilen tarihte uygun saat bulunmamaktadır.
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tıbbı Birim
                   </label>
                   <select
-                    name="disease"
-                    value={formValues.disease}
+                    name="department"
+                    value={formValues.department}
                     onChange={handleChange}
                     className="w-full p-2 border border-gray-300 rounded-lg"
                     required
@@ -190,7 +227,7 @@ const GetAppointmentPage = () => {
                       Doktor Seçin...
                     </option>
                     {filteredDoctors.map((doctor) => (
-                      <option key={doctor.email} value={doctor.email}>
+                      <option key={doctor.id} value={doctor.id}>
                         {doctor.fullName}
                       </option>
                     ))}
@@ -198,7 +235,7 @@ const GetAppointmentPage = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                  className="w-full bg-blue-500 text-white p-2 rounded-lg"
                 >
                   Randevu Oluştur
                 </button>

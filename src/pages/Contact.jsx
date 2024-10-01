@@ -45,7 +45,7 @@ const Contact = () => {
         </h3>
         <form className="space-y-4" onSubmit={formik.handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 ">
               E-mail
             </label>
             <input

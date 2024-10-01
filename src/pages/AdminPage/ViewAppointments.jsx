@@ -30,9 +30,9 @@ const ViewAppointments = () => {
       .filter(appointment => appointment.date === date)
       .map(appointment => ({
         id: appointment.id,
-        patient: appointment.name,
+        patient: appointment.fullName,
         time: appointment.time,
-        doctor: appointment.name|| "Unknown", // Eğer doktor adı eksikse 'Unknown' yaz
+        doctor: appointment.doctor|| "Unknown", // Eğer doktor adı eksikse 'Unknown' yaz
       }));
   };
 
