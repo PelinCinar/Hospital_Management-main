@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import authentication functions
-import CalendarComponent from "./CalendarComponent"; // Takvim bileşeni
+import CalendarComponent from "./CalendarComponent";
 import moment from "moment";
 import {
   collection,
@@ -9,11 +8,13 @@ import {
   getDocs,
   query,
   where,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
 const GetAppointmentPage = () => {
-  const [selectedDate, setSelectedDate] = useState(moment());
+  const [selectedDate, setSelectedDate] = useState(null);
   const [formValues, setFormValues] = useState({
     fullName: "",
     email: "",
@@ -25,96 +26,90 @@ const GetAppointmentPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [diseaseOptions, setDiseaseOptions] = useState([]);
   const [availableTimes, setAvailableTimes] = useState([]);
-  const [userId, setUserId] = useState(null); // Kullanıcı ID'si için durum
-
-  useEffect(() => {
-    const auth = getAuth(); // Firebase Authentication'ı al
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid); // Giriş yapan kullanıcının UID'sini ayarla
-      } else {
-        setUserId(null); // Kullanıcı oturum açmamış
-      }
-    });
-
-    // Temizlik işlemi
-    return () => unsubscribe();
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchDoctorsAndDiseases = async () => {
-      const userSnapshot = await getDocs(collection(db, "users"));
-      const userList = userSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      try {
+        const userSnapshot = await getDocs(collection(db, "users"));
+        const userList = userSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
 
-      const doctorList = userList.filter((user) => user.role === "doctor");
-      const diseaseList = [...new Set(userList.map((user) => user.department))];
+        const doctorList = userList.filter((user) => user.role === "doctor");
+        const diseaseList = [
+          ...new Set(userList.map((user) => user.department)),
+        ];
 
-      setDoctors(doctorList);
-      setDiseaseOptions(diseaseList);
+        setDoctors(doctorList);
+        setDiseaseOptions(diseaseList);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+        setError("Doktor ve bölüm bilgileri yüklenirken bir hata oluştu.");
+      }
     };
 
     fetchDoctorsAndDiseases();
   }, []);
 
   const handleDateClick = (date) => {
+    const today = moment().startOf("day");
+
+    if (date.isBefore(today, "day")) {
+      setError(
+        "Geçmiş bir tarihe randevu alınamaz. Lütfen bugünden sonraki bir tarih seçin."
+      );
+      setShowForm(false);
+      setSelectedDate(null);
+      return;
+    }
+
+    setError("");
     setSelectedDate(date);
     setShowForm(true);
+    if (formValues.doctor) {
+      fetchAvailableTimes(formValues.doctor, date.format("YYYY-MM-DD"));
+    }
   };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    if (name === "doctor" && selectedDate) {
+      await fetchAvailableTimes(value, selectedDate.format("YYYY-MM-DD"));
+    }
+
+    if (name === "department") {
+      setFormValues((prev) => ({
+        ...prev,
+        doctor: "",
+        time: "",
+      }));
+      setAvailableTimes([]);
+    }
   };
-
-  useEffect(() => {
-    const fetchAvailability = async () => {
-      if (formValues.doctor && selectedDate) {
-        const formattedDate = selectedDate.format("YYYY-MM-DD");
-
-        const availabilityQuery = query(
-          collection(db, "availability"),
-          where("doctorId", "==", formValues.doctor),
-          where("date", "==", formattedDate)
-        );
-
-        const availabilitySnapshot = await getDocs(availabilityQuery);
-        if (!availabilitySnapshot.empty) {
-          const availabilityData = availabilitySnapshot.docs[0].data();
-          const slots = availabilityData.slots || [];
-          setAvailableTimes(slots);
-        } else {
-          setAvailableTimes([]);
-        }
-      }
-    };
-
-    fetchAvailability();
-  }, [formValues.doctor, selectedDate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formValues.time) {
-      alert("Lütfen bir randevu saati seçin.");
-      return;
-    }
+    setIsLoading(true);
+    setError("");
 
     try {
       const appointmentData = {
         ...formValues,
         date: selectedDate.format("YYYY-MM-DD"),
         createdAt: Timestamp.now(),
-        userId: userId, // Kullanıcının UID'sini randevu verilerine ekle
       };
 
       await addDoc(collection(db, "appointments"), appointmentData);
-      alert("Randevu Oluşturuldu");
+
+      alert("Randevu başarıyla oluşturuldu!");
       setShowForm(false);
       setFormValues({
         fullName: "",
@@ -123,9 +118,58 @@ const GetAppointmentPage = () => {
         department: "",
         doctor: "",
       });
+      setSelectedDate(null);
     } catch (error) {
       console.error("Error adding appointment: ", error);
-      alert("Randevu oluşturulurken bir hata oluştu.");
+      setError(
+        "Randevu oluşturulurken bir hata oluştu. Lütfen tekrar deneyin."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAvailableTimes = async (doctorEmail, selectedDate) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const q = query(
+        collection(db, "appointments"),
+        where("doctor", "==", doctorEmail),
+        where("date", "==", selectedDate)
+      );
+      const querySnapshot = await getDocs(q);
+      const bookedTimes = querySnapshot.docs.map((doc) => doc.data().time);
+
+      const doctorRef = doc(db, "users", doctorEmail);
+      const doctorSnap = await getDoc(doctorRef);
+
+      if (doctorSnap.exists()) {
+        const doctorData = doctorSnap.data();
+        const doctorAvailability = doctorData.availability || [];
+
+        if (doctorAvailability.length === 0) {
+          setError("Bu doktor için müsait saat bulunmamaktadır.");
+          setAvailableTimes([]);
+          return;
+        }
+
+        const filteredTimes = doctorAvailability.filter(
+          (time) => !bookedTimes.includes(time)
+        );
+
+        if (filteredTimes.length === 0) {
+          setError("Bu tarih için müsait randevu saati bulunmamaktadır.");
+        }
+
+        setAvailableTimes(filteredTimes);
+      } else {
+        setError("Doktor bilgileri bulunamadı.");
+      }
+    } catch (error) {
+      setError("Müsait saatler yüklenirken bir hata oluştu.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -141,59 +185,40 @@ const GetAppointmentPage = () => {
           <CalendarComponent onDateClick={handleDateClick} />
         </div>
         <div className="flex-1">
+          {error && <p className="text-red-500 mb-2">{error}</p>}
           {showForm && (
             <div className="border p-4 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-2">Randevu Formu</h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Randevu Tarihi
+                    İsim
                   </label>
                   <input
                     type="text"
-                    value={selectedDate.format("YYYY-MM-DD")}
+                    name="fullName"
+                    value={formValues.fullName}
+                    onChange={handleChange}
                     className="w-full p-2 border border-gray-300 rounded-lg"
-                    readOnly
+                    required
                   />
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Randevu Saati
+                    E-posta
                   </label>
-                  <div className="space-y-2">
-                    {availableTimes.length > 0 ? (
-                      availableTimes.map((time) => {
-                        const { startTime, endTime } = time; 
-                        const currentTime = `${startTime}-${endTime}`; 
-                        const isSelected = formValues.time === currentTime;
-
-                        return (
-                          <div key={currentTime} className="flex items-center">
-                            <input
-                              type="radio" 
-                              name="appointmentTime"
-                              checked={isSelected}
-                              onChange={() => {
-                                setFormValues((prev) => ({
-                                  ...prev,
-                                  time: currentTime, 
-                                }));
-                              }}
-                            />
-                            <label className="ml-2">{`${startTime} - ${endTime}`}</label>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center">
-                        Seçilen tarihte uygun saat bulunmamaktadır.
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formValues.email}
+                    onChange={handleChange}
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    required
+                  />
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tıbbı Birim
+                    Bölüm
                   </label>
                   <select
                     name="department"
@@ -203,11 +228,11 @@ const GetAppointmentPage = () => {
                     required
                   >
                     <option value="" disabled>
-                      Tıbbı Birim Seçin...
+                      Bölüm Seçin...
                     </option>
-                    {diseaseOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                    {diseaseOptions.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
                       </option>
                     ))}
                   </select>
@@ -222,6 +247,7 @@ const GetAppointmentPage = () => {
                     onChange={handleChange}
                     className="w-full p-2 border border-gray-300 rounded-lg"
                     required
+                    disabled={!formValues.department}
                   >
                     <option value="" disabled>
                       Doktor Seçin...
@@ -233,11 +259,38 @@ const GetAppointmentPage = () => {
                     ))}
                   </select>
                 </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Randevu Saati
+                  </label>
+                  <select
+                    name="time"
+                    value={formValues.time}
+                    onChange={handleChange}
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    required
+                    disabled={
+                      !formValues.doctor ||
+                      !selectedDate ||
+                      availableTimes.length === 0
+                    }
+                  >
+                    <option value="" disabled>
+                      Randevu Saati Seçin...
+                    </option>
+                    {availableTimes.map((time) => (
+                      <option key={time} value={time}>
+                        {time}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white p-2 rounded-lg"
+                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+                  disabled={isLoading || !selectedDate || !formValues.time}
                 >
-                  Randevu Oluştur
+                  {isLoading ? "İşleniyor..." : "Randevu Oluştur"}
                 </button>
               </form>
             </div>

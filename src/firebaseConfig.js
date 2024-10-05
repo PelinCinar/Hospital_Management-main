@@ -21,7 +21,7 @@ console.log("Firestore initialized:", db);
 
 const auth = getAuth(app);
 console.log("Auth initialized:", auth);
+const storage = getAuth(app);
 
 
-
-export { db, doc, getDoc, setDoc,auth };
+export { db, doc, getDoc, setDoc,auth,storage };
