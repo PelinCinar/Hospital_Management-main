@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
-import { db } from "../../fireBaseConfig"; // Firestore yapılandırmanızı içe aktarın
+import { db } from "../../firebaseConfig.js"; // Firestore yapılandırmanızı içe aktarın
 
 const AddUsers = () => {
   const [loading, setLoading] = useState(false);
